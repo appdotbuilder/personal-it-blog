@@ -1,10 +1,20 @@
+import { db } from '../db';
+import { articlesTable } from '../db/schema';
 import { type DeleteInput } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export async function deleteArticle(input: DeleteInput): Promise<{ success: boolean }> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting an article from the database.
-    // Should check if article exists and handle cascade deletion of article-tag relationships.
-    // The junction table relationships should be automatically deleted due to onDelete: 'cascade'.
-    // Should return success status to indicate if deletion was successful.
-    return Promise.resolve({ success: true });
+  try {
+    // Delete the article - cascade deletion will handle article-tag relationships
+    const result = await db.delete(articlesTable)
+      .where(eq(articlesTable.id, input.id))
+      .returning()
+      .execute();
+
+    // Return success based on whether any rows were deleted
+    return { success: result.length > 0 };
+  } catch (error) {
+    console.error('Article deletion failed:', error);
+    throw error;
+  }
 }

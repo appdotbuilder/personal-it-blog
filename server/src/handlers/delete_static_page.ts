@@ -1,10 +1,29 @@
+import { db } from '../db';
+import { staticPagesTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type DeleteInput } from '../schema';
 
 export async function deleteStaticPage(input: DeleteInput): Promise<{ success: boolean }> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a static page from the database.
-    // Should check if static page exists before attempting deletion.
-    // Should return success status to indicate if deletion was successful.
-    // Used for removing static pages from admin dashboard.
-    return Promise.resolve({ success: true });
+  try {
+    // Check if static page exists
+    const existingPage = await db.select()
+      .from(staticPagesTable)
+      .where(eq(staticPagesTable.id, input.id))
+      .execute();
+
+    if (existingPage.length === 0) {
+      return { success: false };
+    }
+
+    // Delete the static page
+    const result = await db.delete(staticPagesTable)
+      .where(eq(staticPagesTable.id, input.id))
+      .returning()
+      .execute();
+
+    return { success: result.length > 0 };
+  } catch (error) {
+    console.error('Static page deletion failed:', error);
+    throw error;
+  }
 }

@@ -1,19 +1,46 @@
+import { db } from '../db';
+import { staticPagesTable } from '../db/schema';
 import { type UpdateStaticPageInput, type StaticPage } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function updateStaticPage(input: UpdateStaticPageInput): Promise<StaticPage> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is updating an existing static page in the database.
-    // It should update the updated_at timestamp and handle unique constraint violations.
-    // Should throw error if static page with given ID doesn't exist.
-    // Used for updating About, Contact, and other static pages.
-    return Promise.resolve({
-        id: input.id,
-        slug: 'updated-page',
-        title: 'Updated Page',
-        content: 'Updated content',
-        seo_title: null,
-        seo_description: null,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as StaticPage);
-}
+export const updateStaticPage = async (input: UpdateStaticPageInput): Promise<StaticPage> => {
+  try {
+    // Build update object with only provided fields
+    const updateData: Record<string, any> = {
+      updated_at: new Date()
+    };
+
+    if (input.slug !== undefined) {
+      updateData['slug'] = input.slug;
+    }
+    if (input.title !== undefined) {
+      updateData['title'] = input.title;
+    }
+    if (input.content !== undefined) {
+      updateData['content'] = input.content;
+    }
+    if (input.seo_title !== undefined) {
+      updateData['seo_title'] = input.seo_title;
+    }
+    if (input.seo_description !== undefined) {
+      updateData['seo_description'] = input.seo_description;
+    }
+
+    // Update the static page
+    const result = await db.update(staticPagesTable)
+      .set(updateData)
+      .where(eq(staticPagesTable.id, input.id))
+      .returning()
+      .execute();
+
+    // Check if static page exists
+    if (result.length === 0) {
+      throw new Error(`Static page with id ${input.id} not found`);
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Static page update failed:', error);
+    throw error;
+  }
+};

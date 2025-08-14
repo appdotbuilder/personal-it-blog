@@ -1,9 +1,30 @@
+import { db } from '../db';
+import { tagsTable } from '../db/schema';
 import { type DeleteInput } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function deleteTag(input: DeleteInput): Promise<{ success: boolean }> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a tag from the database.
-    // Should check if tag exists and handle foreign key constraints through junction table.
-    // Should return success status to indicate if deletion was successful.
-    return Promise.resolve({ success: true });
-}
+export const deleteTag = async (input: DeleteInput): Promise<{ success: boolean }> => {
+  try {
+    // Check if tag exists first
+    const existingTag = await db.select()
+      .from(tagsTable)
+      .where(eq(tagsTable.id, input.id))
+      .execute();
+
+    if (existingTag.length === 0) {
+      return { success: false };
+    }
+
+    // Delete the tag
+    // The articleTagsTable has ON DELETE CASCADE, so related records will be automatically deleted
+    const result = await db.delete(tagsTable)
+      .where(eq(tagsTable.id, input.id))
+      .returning()
+      .execute();
+
+    return { success: result.length > 0 };
+  } catch (error) {
+    console.error('Tag deletion failed:', error);
+    throw error;
+  }
+};

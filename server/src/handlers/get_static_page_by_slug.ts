@@ -1,10 +1,21 @@
+import { db } from '../db';
+import { staticPagesTable } from '../db/schema';
 import { type GetStaticPageBySlugInput, type StaticPage } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export async function getStaticPageBySlug(input: GetStaticPageBySlugInput): Promise<StaticPage | null> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching a single static page by its SEO-friendly slug.
-    // Should return null if static page with given slug doesn't exist.
-    // This is used for displaying About, Contact, and other static pages.
-    // Critical for SEO-friendly URLs of static content.
-    return null;
+  try {
+    // Query static page by slug
+    const results = await db.select()
+      .from(staticPagesTable)
+      .where(eq(staticPagesTable.slug, input.slug))
+      .limit(1)
+      .execute();
+
+    // Return null if not found, otherwise return the first result
+    return results.length > 0 ? results[0] : null;
+  } catch (error) {
+    console.error('Static page fetch failed:', error);
+    throw error;
+  }
 }

@@ -1,9 +1,19 @@
+import { db } from '../db';
+import { staticPagesTable } from '../db/schema';
 import { type StaticPage } from '../schema';
+import { asc } from 'drizzle-orm';
 
 export async function getStaticPages(): Promise<StaticPage[]> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all static pages from the database.
-    // Static pages should be ordered by slug for consistent UI display.
-    // Used for admin dashboard to manage static pages.
-    return [];
+  try {
+    // Fetch all static pages ordered by slug for consistent UI display
+    const results = await db.select()
+      .from(staticPagesTable)
+      .orderBy(asc(staticPagesTable.slug))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch static pages:', error);
+    throw error;
+  }
 }
